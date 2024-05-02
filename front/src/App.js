@@ -10,6 +10,7 @@ import Login from './components/Pages/Profile/Login';
 import Logout from './components/Pages/Profile/Logout';
 import Signup from './components/Pages/Profile/Signup';
 import MyProfile from './components/Pages/Profile/MyProfile';
+import RecipeResult from './components/Pages/RecipeResult';
 
 const router = createBrowserRouter([
   {
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
         path: '/myprofile',
         element: <MyProfile />,
       },
+      {
+        path: '/recipe-result',
+        element: <RecipeResult />,
+      }
     ],
   },
 ])

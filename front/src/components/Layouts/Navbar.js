@@ -1,13 +1,8 @@
 import React from 'react'
-import Nav_Button from '../Items/Nav_Button'
-import Menu_Button from '../Items/Menu_Button';
+import Nav_Button from '../Assets/Nav_Button'
+import Menu_Button from '../Assets/Menu_Button';
 
 const Navbar = () => {
-
-    const handleButtonClick = () => {
-        // Handle button click event
-    };
-
     return (
         <div className="w-64 h-screen fixed top-0 left-0 z-20 bg-green-300 transition duration-300 ease-in-out shadow-lg hover:shadow-2xl">
 
@@ -25,14 +20,6 @@ const Navbar = () => {
                         buttonText="Find a Recipe"
                     />
                 </div>
-                {/* <div className='mt-6 flex items-center'>
-                    <Nav_Button
-                        to="/ingredients-list"
-                        iconSrc=".\apple.png"
-                        altText="Ingredients List Icon"
-                        buttonText="Ingredients List"
-                    />
-                </div> */}
                 <div className='mt-6 flex items-center'>
                     <Nav_Button
                         to="/recipe-database"
@@ -55,5 +42,4 @@ const Navbar = () => {
         </div>
     )
 }
-
 export default Navbar
