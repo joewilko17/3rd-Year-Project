@@ -1,6 +1,6 @@
 import React from 'react'
-import Nav_Button from '../Assets/Nav_Button'
-import Menu_Button from '../Assets/Menu_Button';
+import Nav_Button from '../Items/Nav_Button'
+import Menu_Button from '../Items/Menu_Button';
 
 const Navbar = () => {
     return (

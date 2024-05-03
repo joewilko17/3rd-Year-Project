@@ -11,53 +11,54 @@ import Logout from './components/Pages/Profile/Logout';
 import Signup from './components/Pages/Profile/Signup';
 import MyProfile from './components/Pages/Profile/MyProfile';
 import RecipeResult from './components/Pages/RecipeResult';
+import PrivateRoute from './PrivateRoute';
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Layout />,
-    children: [
-      {
-        path: '/',
-        element: <Home />,
-      },
-      {
-        path: '/find-recipe',
-        element: <FindRecipePage />,
-      },
-      {
-        path: '/ingredients-list',
-        element: <IngredientsListPage />,
-      },
-      {
-        path: '/recipe-database',
-        element: <RecipeDatabasePage />,
-      },
-      {
-        path: '/login',
-        element: <Login />,
-      },
-      {
-        path: '/logout',
-        element: <Logout />,
-      },
-      {
-        path: '/signup',
-        element: <Signup />,
-      },
-      {
-        path: '/myprofile',
-        element: <MyProfile />,
-      },
-      {
-        path: '/recipe-result',
-        element: <RecipeResult />,
-      }
-    ],
-  },
-])
+  const router = createBrowserRouter([
+    {
+      path: '/',
+      element: <Layout />,
+      children: [
+        {
+          path: '/',
+          element: <Home />,
+        },
+        {
+          path: '/find-recipe',
+          element: <FindRecipePage />,
+        },
+        {
+          path: '/ingredients-list',
+          element: <IngredientsListPage />,
+        },
+        {
+          path: '/recipe-database',
+          element: <RecipeDatabasePage />,
+        },
+        {
+          path: '/login',
+          element: <Login />,
+        },
+        {
+          path: '/logout',
+          element: <Logout />,
+        },
+        {
+          path: '/signup',
+          element: <Signup />,
+        },
+        {
+          path: '/myprofile',
+          element: <MyProfile/>,
+        },
+        {
+          path: '/recipe-result',
+          element: <RecipeResult />,
+        }
+      ],
+    },
+  ])
 
-export const App = () => <RouterProvider router={router} />
+  export const App = () => <RouterProvider router={router} />
 
 // const App = () => {
 //   return (

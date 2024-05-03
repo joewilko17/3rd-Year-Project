@@ -1,7 +1,7 @@
 // Header.js
 import React from 'react';
-import Profile_Button from '../Assets/Profile_Button';
-import Home_Button from '../Assets/Home_Button';
+import Profile_Button from '../Items/Profile_Button';
+import Home_Button from '../Items/Home_Button';
 
 const Header = () => {
     return (
