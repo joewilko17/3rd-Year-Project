@@ -8,12 +8,12 @@
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
-   /* hide scrollbar for IE, Edge and Firefox */
+    /* hide scrollbar for IE, Edge and Firefox */
     .no-scrollbar {
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;  /* Firefox */
-  }
-}
+      }
+    }
 
 @layer base {
     /* changes the colour of the main body of each page */
