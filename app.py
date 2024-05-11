@@ -1,69 +1,60 @@
-from flask import Flask, request, jsonify
-from backend.DatabaseManager import DatabaseManager
-from backend.ProfileManager import ProfileManager
-from backend.RecipeRecommendation import RecipeRecommendation
-import jwt
-from middleware import token_required
-import secrets
+from flask import Flask, make_response, request, jsonify
+from backend.RecipeManager import RecipeManager
+from backend.RecipeRecommender import RecipeRecommender
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = secrets.token_hex(24)
-DatabaseManager = DatabaseManager()
-ProfileManager = ProfileManager()
+recipe_manager = RecipeManager()
+recipe_recommender = RecipeRecommender()
 
 ## RECIPE RECOMMENDATION
 
-@app.route('/api/submit', methods=['POST'])
-def submit_data():
-    # Get the JSON data sent in the request body
+# get submitted recipes for recommendation
+@app.route('/api/submitRecommendationSearch', methods=['POST'])
+def submit_recommendation_search():
     data = request.get_json()
     print("Received JSON data:", request.get_json())
-
-    # Extract the selected card and ingredients from the JSON data
     selected_ingredients = data.get('ingredients')
-
-    # Process the data as needed
     print("Received selected ingredients:", selected_ingredients)
-
-    recommender = RecipeRecommendation()
-    recommendationIDs = recommender.recommend_recipe(selected_ingredients)
-    print("Recommendation IDs:", recommendationIDs)
-    best_recipes = DatabaseManager.get_recipe_data(recommendationIDs)
-    
-    # Respond to the client
+    recommendationIDs = recipe_recommender.recommend_recipe(selected_ingredients)
+    print("Recommended Recipe IDs:", recommendationIDs)
+    best_recipes = recipe_manager.get_specific_recipe_data(recommendationIDs)
     print(best_recipes)
     return jsonify({'recipes': best_recipes})
 
+# get ingredients based on food groups for ingredients table
 @app.route('/api/getFoodGroups', methods=['GET'])
-def get_food_groups_api():
-    food_groups = DatabaseManager.get_food_groups()
+def get_food_groups():
+    food_groups = recipe_manager.get_food_groups()
     return jsonify(food_groups)
 
+# get all available recipes based on search and filter categories
 @app.route('/api/getAllRecipes', methods=['GET'])
-def get_all_recipes_api():
-    all_recipes = DatabaseManager.get_all_recipes()
+def get_all_recipes():
+    filters = request.args.get('filters')
+    keywords = request.args.get('keywords')
+    print("filters recieved:", filters)
+    print("keywords recieved:", keywords)
+    filters = filters.split(',') if filters else []
+    keywords = keywords.split(',') if keywords else []
+    all_recipes = recipe_manager.get_all_recipes()
+    if keywords:
+        all_recipes = recipe_manager.filter_recipes_by_keywords(all_recipes, keywords)
+        if not all_recipes:
+            error_response = {
+                "error" : "No recipes found for the entered keyword"
+            }
+            return make_response(jsonify(error_response), 404)  
+    if filters:
+        all_recipes = recipe_manager.filter_recipes_by_time(all_recipes, filters)
     return jsonify(all_recipes)
 
-
-## USER LOGIN & AUTHENTICATION
-
-@app.route('/profile')
-@token_required
-def profile(current_user):
-    return jsonify({'message': f'Welcome, {current_user}!'})
-
-@app.route('/login', methods=['POST'])
-def login():
-    auth = request.authorization
-    if not auth or not auth.username or not auth.password:
-        return jsonify({'message': 'Could not verify'}), 401
-
-    user = ProfileManager.get_user(auth.username)
-    if user and user[2] == auth.password:
-        token = jwt.encode({'username': auth.username}, app.config['SECRET_KEY'])
-        return jsonify({'token': token.decode('UTF-8')})
-
-    return jsonify({'message': 'Invalid username or password'}), 401
+# get specific requested recipes from fetched id arguement
+@app.route('/api/getRecipe', methods=['GET'])
+def get_recipe():
+    recipe_id = request.args.get('recipe_id')
+    specific_recipe = recipe_manager.get_specific_recipe_data([recipe_id])
+    print(specific_recipe)
+    return jsonify(specific_recipe) if specific_recipe else jsonify({})
 
 if __name__ == '__main__':
     app.run(debug=True)
