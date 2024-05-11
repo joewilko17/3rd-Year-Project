@@ -2,5 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+    /* hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    /* hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+    }
 
+@layer base {
+    /* changes the colour of the main body of each page */
+    body {
+      @apply bg-gray-400
+    }
+  }
 

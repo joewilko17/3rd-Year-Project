@@ -1,51 +1,84 @@
 import base64
-import json
-from flask import Flask, request, jsonify
-from backend.DatabaseManager import DatabaseManager
+from flask import Flask, make_response, request, jsonify
 from backend.ProfileManager import ProfileManager
-from backend.RecipeRecommendation import RecipeRecommendation
+from backend.RecipeManager import RecipeManager
+from backend.RecipeRecommender import RecipeRecommender
 from middleware import token_required
-from werkzeug.utils import secure_filename
 import secrets
 import jwt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(24)
-DatabaseManager = DatabaseManager()
+recipe_manager = RecipeManager()
+recipe_recommender = RecipeRecommender()
 profile_manager = ProfileManager()
 
 ## RECIPE RECOMMENDATION
 
-@app.route('/api/submit', methods=['POST'])
-def submit_data():
-    # Get the JSON data sent in the request body
+# get submitted recipes for recommendation
+@app.route('/api/submitRecommendationSearch', methods=['POST'])
+def submit_recommendation_search():
     data = request.get_json()
-    print("Received JSON data:", request.get_json())
-
-    # Extract the selected card and ingredients from the JSON data
-    selected_ingredients = data.get('ingredients')
-
-    # Process the data as needed
-    print("Received selected ingredients:", selected_ingredients)
-
-    recommender = RecipeRecommendation()
-    recommendationIDs = recommender.recommend_recipe(selected_ingredients)
-    print("Recommendation IDs:", recommendationIDs)
-    best_recipes = DatabaseManager.get_recipe_data(recommendationIDs[0])
+    print("Received JSON data:", data)
     
-    # Respond to the client
+    requestData = data.get('requestData', {})
+    selected_ingredients = requestData.get('ingredients', [])
+    profile_id = requestData.get('profileID')
+    
+    print("Received selected ingredients:", selected_ingredients)
+    print("Received profile ID:", profile_id)
+    
+    allergies = ['butter']  # You can fetch allergies based on profileID
+    preferences = ['potatoes']  # You can fetch preferences based on profileID
+    
+    recommendationIDs = recipe_recommender.recommend_recipe(selected_ingredients, allergies, preferences)
+    print("Recommended Recipe IDs:", recommendationIDs)
+    best_recipes = recipe_manager.get_specific_recipe_data(recommendationIDs)
     print(best_recipes)
     return jsonify({'recipes': best_recipes})
 
+# get ingredients based on food groups for ingredients table
 @app.route('/api/getFoodGroups', methods=['GET'])
-def get_food_groups_api():
-    food_groups = DatabaseManager.get_food_groups()
+def get_food_groups():
+    food_groups = recipe_manager.get_food_groups()
     return jsonify(food_groups)
 
+# get all available recipes based on search and filter categories
 @app.route('/api/getAllRecipes', methods=['GET'])
-def get_all_recipes_api():
-    all_recipes = DatabaseManager.get_all_recipes()
+def get_all_recipes():
+    filters = request.args.get('filters')
+    keywords = request.args.get('keywords')
+    print("filters recieved:", filters)
+    print("keywords recieved:", keywords)
+    filters = filters.split(',') if filters else []
+    keywords = keywords.split(',') if keywords else []
+    all_recipes = recipe_manager.get_all_recipes()
+    if keywords:
+        all_recipes = recipe_manager.filter_recipes_by_keywords(all_recipes, keywords)
+        if not all_recipes:
+            error_response = {
+                "error" : "No recipes found for the entered keyword"
+            }
+            return make_response(jsonify(error_response), 404)  
+    if filters:
+        all_recipes = recipe_manager.filter_recipes_by_time(all_recipes, filters)
     return jsonify(all_recipes)
+
+@app.route('/api/getRecipes/<int:profile_id>', methods=['GET'])
+def get_recipes(profile_id):
+    print("profile id:  ", profile_id)
+    all_recipe_ids = profile_manager.get_profiles_favourites(profile_id)
+    all_recipes = recipe_manager.get_specific_recipe_data(all_recipe_ids)
+    print("favourites:  ", all_recipes)
+    return jsonify(all_recipes)
+
+# get specific requested recipes from fetched id arguement
+@app.route('/request/getRecipe', methods=['GET'])
+def get_recipe():
+    recipe_id = request.args.get('recipe_id')
+    specific_recipe = recipe_manager.get_specific_recipe_data([recipe_id])
+    print(specific_recipe)
+    return jsonify(specific_recipe) if specific_recipe else jsonify({})
 
 
 ## USER LOGIN & AUTHENTICATION
@@ -56,20 +89,20 @@ def profile(current_user):
     user = profile_manager.get_user(current_user)
     if not user:
         return jsonify({'message': 'User not found!'}), 404
-
+    avatar_base64 = None
+    if user[3]:  # Check if avatar is not None
+        avatar_base64 = base64.b64encode(user[3]).decode('utf-8')
     user_data = {
         'id': user[0],  # Assuming the first column is the user ID
         'username': user[1],  # Assuming the second column is the username
-        'avatar': base64.b64encode(user[3]).decode('utf-8'),  # Convert bytes to base64 string
+        'avatar': avatar_base64,  # Convert bytes to base64 string
         'favourites': user[4],
         'allergies': user[5],
         'preferences': user[6]
         # Assuming the third column is the password
         # Add other user details here
     }
-
     return jsonify(user_data), 200
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -94,19 +127,37 @@ def login():
         return jsonify({'user': {'username': username, 'email': user[1]}, 'token': token})
     return jsonify({'message': 'Invalid password'}), 401
 
-
 @app.route('/register', methods=['POST'])
 def register():
     # get data and add to database
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    if username and password:
-        profile_manager.add_user(username,password)
-        return jsonify({'message': 'User registered successfully!'}), 201
-    return jsonify({'message': 'Missing username or password!'}), 400
+    image_file = request.files.get('image')
 
+    if not (username and password):
+        return jsonify({'message': 'Missing username or password!'}), 400
+    
+    profile_manager.add_user(username, password)
+    return jsonify({'message': 'User registered successfully!'}), 201
+
+@app.route('/add-to-favourites', methods=['POST'])
+def add_to_favourites():
+    recipe_id = request.args.get('recipeID')
+    profile_id = request.args.get('profileID')
+
+    # Check if recipeID exists in profile's FavouriteRecipes
+    # If not, add it to FavouriteRecipes
+
+    # Assuming you have a function to add a recipe to favorites in your profile_manager
+    try:
+        profile_manager.add_favourite_recipe(recipe_id, profile_id)
+        return jsonify({'message': 'Recipe added to favorites successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': 'Error adding recipe to favorites'}), 500
+    
 ## VALIDATION
+
 @app.route('/validate/check_username', methods=['POST'])
 def check_username():
     data = request.get_json()
