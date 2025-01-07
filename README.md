@@ -1,6 +1,6 @@
 # CulinaryCraftsman
 
-**CulinaryCraftsman** is a recipe recommendation web application developed as part of a software engineering project. The platform leverages user-selected ingredients to provide personalized, health-focused recipe recommendations, aiming to promote better eating habits through an intuitive, user-friendly interface.
+**CulinaryCraftsman** is a recipe recommendation web application developed as part of my software engineering dissertation project. The platform leverages user-selected ingredients to provide personalized, health-focused recipe recommendations, aiming to promote better eating habits through an intuitive, user-friendly interface.
 
 **Coming Soon:** see my Portfolio Website ([joewilko17.github.io](https://joewilko17.github.io/)) for more content about how I have made this project, why I have made it and how I want to expand the project in the future.
 
